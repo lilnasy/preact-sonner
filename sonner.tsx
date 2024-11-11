@@ -1,4 +1,3 @@
-
 import { Component, createRef, type JSX, isValidElement } from "preact"
 import cx from "clsx/lite"
 import { CloseIcon, getAsset, Loader } from "./assets.tsx"
@@ -326,9 +325,10 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
             const prefersDark = matchMedia("(prefers-color-scheme: dark)")
             prefersDark.addEventListener("change", this, options)
         }
-        for (const event of ["blur", "focus", "keydown", "mouseenter", "mousemove", "mouseleave", "pointerdown", "pointerup"] as const) {
+        for (const event of ["blur", "focus", "mouseenter", "mousemove", "mouseleave", "pointerdown", "pointerup"] as const) {
             this.#ol.current!.addEventListener(event, this, options)
         }
+        document.addEventListener("keydown", this, options)
         this.#heights.addEventListener(this, options)
         this.#unsubscribe = ToastState.subscribe(this.#toastStateSubscriber)
     }
@@ -360,19 +360,9 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
             }
         } else if (event instanceof MouseEvent) {
             if (event.type === "mouseenter" || event.type === "mousemove") {
-                if (this.#expanded === false) {
-                    this.#expanded = true
-                    for (const li of ol.children) {
-                        li.dispatchEvent(new ExpandEvent(true))
-                    }
-                }
-            } else if (event.type === "mouseleave" && this.#interacting === false) {
-                if (this.#expanded) {
-                    this.#expanded = false
-                    for (const li of ol.children) {
-                        li.dispatchEvent(new ExpandEvent(false))
-                    }
-                }
+                if (this.#expanded === false) this.#expand(true)
+            } else if (event.type === "mouseleave" && this.#interacting === false && this.#expanded) {
+                this.#expand(false)
             }
         } else if (event instanceof PointerEvent) {
             if (event.type === "pointerdown") {
@@ -396,13 +386,20 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
             const { hotkey = DEFAULT_HOTKEY } = this.props
             const active = hotkey.every(key => (key in event && (event as any)[key]) || event.code === key)
             if (active) {
-                this.#expanded = true
+                this.#expand(true)
                 ol.focus()
             } else if (event.code === "Escape") {
                 if (document.activeElement === ol || ol.contains(document.activeElement)) {
-                    this.#expanded = false
+                    this.#expand(false)
                 }
             }
+        }
+    }
+
+    #expand(expanded: boolean) {
+        this.#expanded = expanded
+        for (const li of this.#ol.current!.children) {
+            li.dispatchEvent(new ExpandEvent(expanded))
         }
     }
     
