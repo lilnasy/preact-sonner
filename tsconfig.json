@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "allowImportingTsExtensions": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "jsx": "react-jsx",
+        "jsxImportSource": "preact",
+        "moduleResolution": "NodeNext",
+        "module": "NodeNext",
+        "target": "ES2023"
+    }
+}
