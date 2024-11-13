@@ -29,7 +29,7 @@ const TIME_BEFORE_UNMOUNT = 200
 
 const DEFAULT_HOTKEY = ["altKey", "KeyT"] as const
 
-class Toast extends Component<ToastProps, never> {
+class Toast extends Component<ToastProps, never> implements EventListenerObject {
 
     #ac = new AbortController
     #closeTimerStartTime?: number
@@ -306,7 +306,7 @@ interface ToasterState {
     toasts: ToastT[]
 }
 
-export class Toaster extends Component<ToasterProps, ToasterState> {
+export class Toaster extends Component<ToasterProps, ToasterState> implements EventListenerObject {
     
     state: ToasterState = { toasts: [] }
     
@@ -363,26 +363,26 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
                 if (this.#expanded === false) this.#expand(true)
             } else if (event.type === "mouseleave" && this.#interacting === false && this.#expanded) {
                 this.#expand(false)
-            }
-        } else if (event instanceof PointerEvent) {
-            if (event.type === "pointerdown") {
-                const undismissible =
-                    event.target instanceof HTMLElement &&
-                    event.target.dataset.undismissible === "true"
-                
-                if (undismissible === false) {
-                    this.#interacting = true
-                    for (const li of this.#ol.current!.children) {
-                        li.dispatchEvent(new InteractEvent(true))
+            } else if (event instanceof PointerEvent) {
+                if (event.type === "pointerdown") {
+                    const undismissible =
+                        event.target instanceof HTMLElement &&
+                        event.target.dataset.undismissible === "true"
+                    
+                    if (undismissible === false) {
+                        this.#interacting = true
+                        for (const li of this.#ol.current!.children) {
+                            li.dispatchEvent(new InteractEvent(true))
+                        }
+                    }
+                } else if (event.type === "pointerup") {
+                    this.#interacting = false
+                    for (const li of ol.children) {
+                        li.dispatchEvent(new InteractEvent(false))
                     }
                 }
-            } else if (event.type === "pointerup") {
-                this.#interacting = false
-                for (const li of ol.children) {
-                    li.dispatchEvent(new InteractEvent(false))
-                }
             }
-        } else if (event instanceof KeyboardEvent) {
+        } if (event instanceof KeyboardEvent) {
             const { hotkey = DEFAULT_HOTKEY } = this.props
             const active = hotkey.every(key => (key in event && (event as any)[key]) || event.code === key)
             if (active) {
